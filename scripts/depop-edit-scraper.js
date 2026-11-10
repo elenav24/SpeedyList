@@ -52,30 +52,6 @@
         label: /condition/i
       },
       colors: {
-        selectors: [
-          "#colour-input",
-          'input[aria-labelledby="colour-label"]',
-          'select[multiple][name*="color" i]',
-          'select[name*="color" i]',
-          'input[type="checkbox"][name*="color" i]',
-          '[role="checkbox"][aria-label*="color" i]',
-          '[role="combobox"][aria-label*="color" i]',
-          '[role="combobox"][aria-label*="colour" i]',
-          'button[aria-label*="color" i]',
-          'button[aria-label*="colour" i]',
-          '[data-testid*="color" i] input[type="checkbox"]'
-        ],
-        valueContainerSelector: '[class*="_selectValue_"]',
-        controlContainerSelector: '[class*="_selectControl_"]',
-        selectedLabelSelector: '[class*="_selectedItemLabel_"]',
-        removeButtonSelector: 'button[aria-label^="Remove "]',
-        selectedSelectors: [
-          'input[type="checkbox"]:checked',
-          '[role="checkbox"][aria-checked="true"]',
-          '[role="option"][aria-selected="true"]',
-          '[aria-pressed="true"]',
-          '[data-state="checked"]'
-        ],
         label: /colou?rs?/i,
         multiple: true
       },
@@ -161,6 +137,41 @@
     return config.multiple ? (value ? value.split(/\s*,\s*/).filter(Boolean) : []) : value;
   }
 
+  function readColors() {
+    const control = document.querySelector("#colour-input");
+    if (!control) {
+      console.warn('[SpeedyList] Color input "#colour-input" not found; returning no colors.');
+      return [];
+    }
+
+    const container = control.closest('[class*="_selectControl_"]');
+    if (!container) {
+      console.warn("[SpeedyList] Color select container not found for #colour-input; control:", control);
+      return [];
+    }
+
+    const chipLabels = Array.from(container.querySelectorAll('[class*="_selectedItemLabel_"]'))
+      .map((element) => element.textContent.trim())
+      .filter(Boolean);
+    if (chipLabels.length) {
+      const colors = [...new Set(chipLabels)];
+      console.info("[SpeedyList] Scraped colors via selected chip labels:", colors);
+      return colors;
+    }
+
+    const removeLabels = Array.from(container.querySelectorAll('button[aria-label^="Remove "]'))
+      .map((button) => button.getAttribute("aria-label").replace(/^Remove\s+/, "").trim())
+      .filter(Boolean);
+    if (removeLabels.length) {
+      const colors = [...new Set(removeLabels)];
+      console.info("[SpeedyList] Scraped colors via remove-button labels:", colors);
+      return colors;
+    }
+
+    console.warn("[SpeedyList] No selected colors found; color container:", container);
+    return [];
+  }
+
   function normalizePrice(value) {
     let amount = String(value || "").trim().replace(/[^\d.,-]/g, "");
     if (!amount || !/\d/.test(amount)) return "";
@@ -192,8 +203,13 @@
 
     for (const [name, config] of Object.entries(CONFIG.fields)) {
       if (name === "description") continue;
-      const control = findControl(config);
-      let value = control ? readDropdown(name, control) : (config.multiple ? [] : "");
+      let value;
+      if (name === "colors") {
+        value = readColors();
+      } else {
+        const control = findControl(config);
+        value = control ? readDropdown(name, control) : (config.multiple ? [] : "");
+      }
       if (name === "price") value = normalizePrice(value);
       listing[name] = value;
       logScraped(name, value, config.optional);
