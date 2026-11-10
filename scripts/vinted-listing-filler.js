@@ -7,6 +7,8 @@
     modalWaitMs: 3000,
     searchSettleMs: 500,
     stepWaitMs: 300,
+    selectionWaitMs: 15000,
+    selectionSettleMs: 900,
     conditionMap: {
       "Excellent": "Very good", "Used - Excellent": "Very good", "Like new": "Very good",
       "Good": "Good", "Used - Good": "Good", "Fair": "Satisfactory", "Used - Fair": "Satisfactory",
@@ -32,6 +34,7 @@
   const CONTROL_SELECTOR = 'input, textarea, select, [role="combobox"], [contenteditable="true"], [role="textbox"], button';
   let filling = false;
   let activePayload = null;
+  let dropdownWaitTimedOut = false;
 
   const retryButton = document.createElement("button");
   retryButton.id = "speedlist-retry-empty-fields";
@@ -327,6 +330,28 @@
       dropdownValueContains(prefixes, requested);
   }
 
+  function modalIsLoading(content) {
+    if (!content?.isConnected) return false;
+    const indicators = content.querySelectorAll('[aria-busy="true"], [data-testid*="loading" i], [class*="loading" i], [class*="spinner" i], [role="status"]');
+    return Array.from(indicators).some((indicator) => {
+      if (!visible(indicator)) return false;
+      const state = `${indicator.getAttribute("aria-label") || ""} ${indicator.textContent || ""}`;
+      return indicator.getAttribute("aria-busy") === "true" || /loading/i.test(state) ||
+        indicator.matches('[data-testid*="loading" i], [class*="loading" i], [class*="spinner" i]');
+    });
+  }
+
+  async function waitForDropdownSelection(option, prefixes, requested, content) {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < CONFIG.selectionWaitMs) {
+      if (optionIsSelected(option, prefixes, requested)) return "selected";
+      const elapsed = Date.now() - startedAt;
+        if (content?.isConnected && !modalIsLoading(content) && elapsed >= CONFIG.selectionSettleMs) return "not-selected";
+      await wait(100);
+    }
+    return optionIsSelected(option, prefixes, requested) ? "selected" : "timeout";
+  }
+
   function fireSelectEvents(control) {
     control.dispatchEvent(new Event("input", { bubbles: true }));
     control.dispatchEvent(new Event("change", { bubbles: true }));
@@ -418,12 +443,25 @@
         }
 
         if (!optionIsSelected(option, prefixes, value)) {
+          showStatus(`Waiting for Vinted to select ${fieldName}...`);
           dispatchPointerClick(option);
-          await wait(CONFIG.stepWaitMs);
-          if (!optionIsSelected(option, prefixes, value) && option.isConnected) {
+          let selectionState = await waitForDropdownSelection(option, prefixes, value, modalResult.content);
+          if (selectionState === "timeout") {
+            dropdownWaitTimedOut = true;
+            console.warn(`[SpeedyList] Vinted is still loading ${fieldName} option "${value}"; pausing the remaining fields.`);
+            failed = true;
+            break;
+          }
+          if (selectionState === "not-selected" && option.isConnected) {
             console.warn(`[SpeedyList] Pointer sequence did not select ${fieldName} option "${value}"; trying element click fallback.`);
             option.click();
-            await wait(CONFIG.stepWaitMs);
+            selectionState = await waitForDropdownSelection(option, prefixes, value, modalResult.content);
+            if (selectionState === "timeout") {
+              dropdownWaitTimedOut = true;
+              console.warn(`[SpeedyList] Vinted is still loading ${fieldName} option "${value}" after fallback; pausing the remaining fields.`);
+              failed = true;
+              break;
+            }
           }
         }
         if (!optionIsSelected(option, prefixes, value)) {
@@ -522,6 +560,7 @@
   async function fillListing(payload, retry = false) {
     if (filling) return;
     filling = true;
+    dropdownWaitTimedOut = false;
     updateRetryButton(true);
     showStatus("Looking for Vinted listing fields...");
     let failed = false;
@@ -556,6 +595,7 @@
       } else {
         console.warn(`[SpeedyList] Could not fill Vinted ${name}.`);
         failed = true;
+        if (dropdownWaitTimedOut) break;
       }
       await wait(CONFIG.stepWaitMs);
     }
