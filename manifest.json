@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "SpeedyList: Depop to Vinted",
+  "version": "1.0.0",
+  "description": "Copy listing details from a Depop edit page into a Vinted item form.",
+  "action": {
+    "default_title": "View or capture listing",
+    "default_popup": "popup/popup.html"
+  },
+  "permissions": [
+    "storage",
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "https://*.depop.com/*",
+    "https://*.vinted.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.depop.com/products/edit/*"
+      ],
+      "js": [
+        "scripts/depop-edit-scraper.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://*.vinted.com/items/new*"
+      ],
+      "js": [
+        "scripts/vinted-listing-filler.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

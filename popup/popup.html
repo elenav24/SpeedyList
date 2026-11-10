@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SpeedyList</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main class="popup">
+      <header class="header">
+        <p class="eyebrow">SPEEDYLIST / LISTING</p>
+        <h1>Saved fields</h1>
+        <p id="source-note" class="source-note">Loading saved listing...</p>
+      </header>
+
+      <button id="capture-button" class="capture-button" type="button" hidden>
+        Capture this Depop listing
+      </button>
+
+      <section class="fields-section" aria-label="Current saved fields">
+        <dl id="field-list" class="field-list"></dl>
+      </section>
+
+      <section class="copy-section" aria-label="Copy a saved field">
+        <label for="field-picker">Copy a field</label>
+        <div class="copy-controls">
+          <select id="field-picker" aria-label="Field to copy" disabled></select>
+          <button id="copy-button" type="button" disabled>Copy selected</button>
+        </div>
+      </section>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>
