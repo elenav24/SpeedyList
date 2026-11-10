@@ -27,7 +27,19 @@
         label: /category/i
       },
       material: {
-        selectors: ['select[name*="material" i]', '[role="combobox"][aria-label*="material" i]', 'button[aria-label*="material" i]', 'input[name*="material" i]'],
+        selectors: [
+          "#material-input",
+          'input[aria-labelledby="material-label"]',
+          'select[name*="material" i]',
+          '[role="combobox"][aria-label*="material" i]',
+          'button[aria-label*="material" i]',
+          'input[name*="material" i]'
+        ],
+        valueContainerSelector: '[class*="_selectValue_"]',
+        controlContainerSelector: '[class*="_selectControl_"]',
+        selectedLabelSelector: '[class*="_selectedItemLabel_"]',
+        removeButtonSelector: 'button[aria-label^="Remove "]',
+        chipSelect: true,
         label: /material/i,
         optional: true
       },
@@ -41,14 +53,22 @@
       },
       colors: {
         selectors: [
+          "#colour-input",
+          'input[aria-labelledby="colour-label"]',
           'select[multiple][name*="color" i]',
           'select[name*="color" i]',
           'input[type="checkbox"][name*="color" i]',
-          '[role="checkbox"][aria-label*="colou?r" i]',
-          '[role="combobox"][aria-label*="colou?r" i]',
-          'button[aria-label*="colou?r" i]',
+          '[role="checkbox"][aria-label*="color" i]',
+          '[role="combobox"][aria-label*="color" i]',
+          '[role="combobox"][aria-label*="colour" i]',
+          'button[aria-label*="color" i]',
+          'button[aria-label*="colour" i]',
           '[data-testid*="color" i] input[type="checkbox"]'
         ],
+        valueContainerSelector: '[class*="_selectValue_"]',
+        controlContainerSelector: '[class*="_selectControl_"]',
+        selectedLabelSelector: '[class*="_selectedItemLabel_"]',
+        removeButtonSelector: 'button[aria-label^="Remove "]',
         selectedSelectors: [
           'input[type="checkbox"]:checked',
           '[role="checkbox"][aria-checked="true"]',
@@ -103,54 +123,42 @@
 
   function readDropdown(name, control) {
     const config = CONFIG.fields[name];
+    if (config.chipSelect) {
+      const selectControl = control.closest(config.controlContainerSelector);
+      const parent = selectControl || control.parentElement;
+      const container = parent?.matches(config.valueContainerSelector)
+        ? parent
+        : parent?.querySelector(config.valueContainerSelector) ||
+          control.parentElement?.closest(config.valueContainerSelector) ||
+          control.parentElement;
+      const chipLabels = Array.from(container?.querySelectorAll(config.selectedLabelSelector) || [])
+        .map((item) => item.textContent.trim())
+        .filter(Boolean);
+      if (chipLabels.length) {
+        const values = [...new Set(chipLabels)];
+        console.info(`[SpeedyList] Scraped ${name} via selected chip labels:`, values);
+        return config.multiple ? values : values[0];
+      }
+
+      const removeLabels = Array.from(container?.querySelectorAll(config.removeButtonSelector) || [])
+        .map((button) => button.getAttribute("aria-label").replace(/^Remove\s+/, "").trim())
+        .filter(Boolean);
+      if (removeLabels.length) {
+        const values = [...new Set(removeLabels)];
+        console.info(`[SpeedyList] Scraped ${name} via remove-button labels:`, values);
+        return config.multiple ? values : values[0];
+      }
+
+      console.warn(`[SpeedyList] No selected ${name} chips found; field container:`, container || parent || control);
+      return config.multiple ? [] : "";
+    }
     if (control instanceof HTMLSelectElement) {
       const selected = fieldText(control);
       return config.multiple ? selected : selected[0] || "";
     }
-    if (name === "colors") {
-      const fieldLabel = Array.from(document.querySelectorAll("label")).find((label) =>
-        config.label.test(cleanText(label.innerText || label.textContent))
-      );
-      const root = control.closest('fieldset, [role="group"], [data-testid*="color" i]') ||
-        fieldLabel?.closest('fieldset, [role="group"]') ||
-        fieldLabel?.parentElement?.parentElement ||
-        control.parentElement?.parentElement ||
-        control.parentElement;
-      const selected = new Set();
-      const scopes = [...new Set([root, control.parentElement])].filter(Boolean);
-
-      for (const scope of scopes) {
-        for (const selector of config.selectedSelectors) {
-          for (const item of scope.querySelectorAll(selector)) {
-            let labelText = "";
-            if (item instanceof HTMLInputElement) {
-              labelText = Array.from(item.labels || [], (label) => cleanText(label.innerText || label.textContent))
-                .filter(Boolean).join(" ");
-            }
-            labelText ||= cleanText(
-              item.getAttribute("aria-label") ||
-              item.getAttribute("data-label") ||
-              item.getAttribute("data-value") ||
-              item.innerText ||
-              item.textContent ||
-              (item.value !== "on" ? item.value : "")
-            );
-            if (labelText && !/^(select|choose|pick|add|search)$/i.test(labelText)) {
-              selected.add(labelText);
-            }
-          }
-        }
-      }
-      for (const item of document.querySelectorAll('input[type="checkbox"][name*="color" i]:checked')) {
-        const labelText = Array.from(item.labels || [], (label) => cleanText(label.innerText || label.textContent))
-          .filter(Boolean).join(" ") || cleanText(item.getAttribute("aria-label") || item.value);
-        if (labelText && labelText !== "on") selected.add(labelText);
-      }
-      if (selected.size) return [...selected];
-    }
     let value = cleanText(control.getAttribute("aria-valuetext") || control.getAttribute("data-value") || fieldText(control));
     if (/^(select|choose|pick|add|search)\b/i.test(value)) value = "";
-    return name === "colors" ? (value ? value.split(/\s*,\s*/).filter(Boolean) : []) : value;
+    return config.multiple ? (value ? value.split(/\s*,\s*/).filter(Boolean) : []) : value;
   }
 
   function normalizePrice(value) {

@@ -20,7 +20,7 @@
       material: { type: "dropdown", optional: true, selectors: ['select[name*="material" i]', '[role="combobox"][aria-label*="material" i]', 'button[aria-label*="material" i]'], label: /material/i },
       brand: { type: "text", selectors: ['input[name*="brand" i]', 'input[id*="brand" i]', 'input[placeholder*="brand" i]', 'input[aria-label*="brand" i]'], label: /brand/i },
       condition: { type: "dropdown", selectors: ['select[name*="condition" i]', '[role="combobox"][aria-label*="condition" i]', 'button[aria-label*="condition" i]'], label: /condition/i },
-      colors: { type: "dropdown", multiple: true, selectors: ['select[name*="color" i]', '[role="combobox"][aria-label*="colou?r" i]', 'button[aria-label*="colou?r" i]'], label: /colou?rs?/i },
+      colors: { type: "dropdown", multiple: true, selectors: ['select[name*="color" i]', '[role="combobox"][aria-label*="color" i]', '[role="combobox"][aria-label*="colour" i]', 'button[aria-label*="color" i]', 'button[aria-label*="colour" i]'], label: /colou?rs?/i },
       packageSize: { type: "dropdown", selectors: ['select[name*="package" i]', '[role="combobox"][aria-label*="package" i]', 'button[aria-label*="package" i]', 'select[name*="shipping" i]'], label: /package size|parcel size|shipping size/i },
       price: { type: "text", selectors: ['input[name*="price" i]', 'input[id*="price" i]', 'input[placeholder*="price" i]', 'input[inputmode="decimal"]'], label: /price/i }
     }
