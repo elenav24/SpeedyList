@@ -38,7 +38,8 @@ The requested source patterns `https://*://*` and `https://*.vinted.*/*` are not
 5. In the popup, click **Capture this Depop listing**. The extension reads the description, category, optional material, brand, condition, colors, package size, and price into `chrome.storage.local`.
 6. Review the saved fields in the popup. Click any populated field row to copy that value; a confirmation appears at the bottom.
 7. Open a Vinted item creation page. The extension fills matching fields; dropdowns are matched by exact text first, then case-insensitive partial text.
-8. Review every field, correct anything needed, and submit the listing yourself.
+8. If selecting a category reveals more fields, click **Retry empty fields** at the top-right of the page. It fills newly available empty fields without overwriting values already present.
+9. Review every field, correct anything needed, and submit the listing yourself.
 
 The pending listing is stored in `chrome.storage.local`. If a required Vinted field cannot be found or a value cannot be matched, the extension leaves the payload in storage so you can retry after checking the page or updating selectors. Material is optional.
 

@@ -28,6 +28,30 @@
 
   const CONTROL_SELECTOR = 'input, textarea, select, [role="combobox"], [contenteditable="true"], [role="textbox"], button';
   let filling = false;
+  let activePayload = null;
+
+  const retryButton = document.createElement("button");
+  retryButton.id = "speedlist-retry-empty-fields";
+  retryButton.type = "button";
+  retryButton.textContent = "Retry empty fields";
+  retryButton.disabled = true;
+  retryButton.setAttribute("aria-label", "Try filling empty listing fields again");
+  retryButton.style.cssText = [
+    "position:fixed",
+    "top:16px",
+    "right:16px",
+    "z-index:2147483647",
+    "min-height:38px",
+    "padding:0 14px",
+    "border:1px solid #0f5745",
+    "border-radius:5px",
+    "background:#176b57",
+    "box-shadow:0 3px 12px rgba(0,0,0,.2)",
+    "color:#fff",
+    "font:600 13px/1.2 system-ui,sans-serif",
+    "cursor:pointer"
+  ].join(";");
+  document.body.append(retryButton);
 
   function cleanText(value) {
     return String(value || "").replace(/\s+/g, " ").trim();
@@ -222,6 +246,49 @@
     return Array.isArray(value) ? value.length > 0 : Boolean(cleanText(value));
   }
 
+  function fieldHasValue(control, fieldName) {
+    if (control instanceof HTMLSelectElement) {
+      return Array.from(control.selectedOptions).some((option) => {
+        const value = cleanText(option.value || option.textContent);
+        return value && !/^(select|choose|pick|add|search)(\b|\s)/i.test(value);
+      });
+    }
+    if (control instanceof HTMLInputElement || control instanceof HTMLTextAreaElement) {
+      return Boolean(cleanText(control.value));
+    }
+    if (control.isContentEditable) {
+      return Boolean(cleanText(control.textContent));
+    }
+
+    const accessibleValue = cleanText(control.getAttribute("aria-valuetext") || control.getAttribute("data-value"));
+    if (accessibleValue && !/^(select|choose|pick|add|search)(\b|\s)/i.test(accessibleValue)) {
+      return true;
+    }
+
+    const container = control.closest('[class*="_selectControl_"], fieldset, [role="group"]') || control.parentElement;
+    const selectedChips = container?.querySelector('[class*="_selectedItemLabel_"]');
+    if (selectedChips && cleanText(selectedChips.textContent)) {
+      return true;
+    }
+
+    const displayedValue = cleanText(control.innerText || control.textContent);
+    const placeholders = {
+      category: "category",
+      material: "material",
+      condition: "condition",
+      colors: "color",
+      packageSize: "package size"
+    };
+    return Boolean(displayedValue &&
+      displayedValue.toLowerCase() !== placeholders[fieldName] &&
+      !/^(select|choose|pick|add|search)(\b|\s)/i.test(displayedValue));
+  }
+
+  function updateRetryButton(isBusy = false) {
+    retryButton.disabled = isBusy || !activePayload;
+    retryButton.textContent = isBusy ? "Retrying..." : "Retry empty fields";
+  }
+
   function clearPayload() {
     chrome.storage.local.remove(CONFIG.storageKey, () => {
       if (chrome.runtime.lastError) {
@@ -234,9 +301,10 @@
     });
   }
 
-  async function fillListing(payload) {
+  async function fillListing(payload, retry = false) {
     if (filling) return;
     filling = true;
+    updateRetryButton(true);
     showStatus("Looking for Vinted listing fields...");
     const controls = await waitForFields();
     let failed = false;
@@ -253,6 +321,10 @@
         if (!config.optional) failed = true;
         continue;
       }
+      if (retry && fieldHasValue(control, name)) {
+        console.info(`[SpeedyList] Retry skipped populated ${name} field.`);
+        continue;
+      }
       if (name === "condition") value = mapCondition(String(value));
       const success = config.type === "dropdown"
         ? await fillDropdown(control, config, value, name)
@@ -265,6 +337,7 @@
       }
     }
     filling = false;
+    updateRetryButton();
     if (failed) {
       console.warn("[SpeedyList] Required fields remain unmatched; payload retained in storage.");
       showStatus("Some fields need attention. The saved copy is still available.", true);
@@ -286,6 +359,29 @@
       showStatus("Saved listing data is invalid and was left in storage.", true);
       return;
     }
-    fillListing(payload);
+
+    activePayload = payload;
+    updateRetryButton();
+    if (payload.vintedAutoAttempted) {
+      console.info("[SpeedyList] Automatic fill already attempted; use the retry button when more fields are ready.");
+      showStatus("Choose the listing category, then retry empty fields if needed.");
+      return;
+    }
+
+    activePayload = { ...payload, vintedAutoAttempted: true };
+    chrome.storage.local.set({ [CONFIG.storageKey]: activePayload }, () => {
+      if (chrome.runtime.lastError) {
+        console.warn("[SpeedyList] Could not mark the automatic fill attempt:", chrome.runtime.lastError.message);
+      }
+      fillListing(activePayload);
+    });
+  });
+
+  retryButton.addEventListener("click", () => {
+    if (!activePayload) {
+      showStatus("No saved listing is available to retry.", true);
+      return;
+    }
+    fillListing(activePayload, true);
   });
 })();
