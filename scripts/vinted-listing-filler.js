@@ -26,7 +26,7 @@
       packageSize: { type: "dropdown", testIdPrefixes: ["package-size", "packageSize", "shipping-size"], selectors: ['button[data-testid="package-size-select-dropdown-input"]', 'select[name*="package" i]', '[role="combobox"][aria-label*="package" i]', 'button[aria-label*="package" i]', 'select[name*="shipping" i]'], label: /package size|parcel size|shipping size/i },
       price: { type: "text", selectors: ['input[name*="price" i]', 'input[id*="price" i]', 'input[placeholder*="price" i]', 'input[inputmode="decimal"]'], label: /price/i }
     },
-    fillOrder: ["category", "brand", "size", "condition", "colors", "material", "price", "packageSize", "title", "description"]
+    fillOrder: ["title", "description", "category", "brand", "size", "condition", "colors", "material", "price", "packageSize"]
   };
 
   const CONTROL_SELECTOR = 'input, textarea, select, [role="combobox"], [contenteditable="true"], [role="textbox"], button';
@@ -314,6 +314,19 @@
     return false;
   }
 
+  function dropdownValueContains(prefixes, requested) {
+    return prefixes.some((prefix) => {
+      const valueElement = document.querySelector(`[data-testid="${prefix}-select-dropdown-input--value"]`);
+      return cleanText(valueElement?.textContent).toLowerCase().includes(cleanText(requested).toLowerCase());
+    });
+  }
+
+  function optionIsSelected(option, prefixes, requested) {
+    return option.getAttribute("aria-checked") === "true" ||
+      option.getAttribute("aria-selected") === "true" ||
+      dropdownValueContains(prefixes, requested);
+  }
+
   function fireSelectEvents(control) {
     control.dispatchEvent(new Event("input", { bubbles: true }));
     control.dispatchEvent(new Event("change", { bubbles: true }));
@@ -404,9 +417,20 @@
           break;
         }
 
-        const isSelected = option.getAttribute("aria-checked") === "true" ||
-          option.getAttribute("aria-selected") === "true";
-        if (!isSelected) dispatchPointerClick(option);
+        if (!optionIsSelected(option, prefixes, value)) {
+          dispatchPointerClick(option);
+          await wait(CONFIG.stepWaitMs);
+          if (!optionIsSelected(option, prefixes, value) && option.isConnected) {
+            console.warn(`[SpeedyList] Pointer sequence did not select ${fieldName} option "${value}"; trying element click fallback.`);
+            option.click();
+            await wait(CONFIG.stepWaitMs);
+          }
+        }
+        if (!optionIsSelected(option, prefixes, value)) {
+          console.warn(`[SpeedyList] Click did not select ${fieldName} option "${value}".`);
+          failed = true;
+          break;
+        }
         selected.push(optionLabel(option));
         await wait(CONFIG.stepWaitMs);
       }

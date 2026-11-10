@@ -37,7 +37,7 @@ The requested source patterns `https://*://*` and `https://*.vinted.*/*` are not
 4. Open a Depop edit page and click the pinned SpeedyList toolbar icon.
 5. In the popup, click **Capture this Depop listing**. The extension reads the description, category, optional material and size, brand, condition, colors, package size, and price into `chrome.storage.local`.
 6. Review the saved fields in the popup. Click any populated field row to copy that value; a confirmation appears at the bottom.
-7. Open a Vinted item creation page. The extension fills category, brand, size, condition, colors, material, price, and package size in order. Dropdowns use their field test IDs, search when available, and match exact text before case-insensitive or partial matches.
+7. Open a Vinted item creation page. The extension fills title and description first, then category, brand, size, condition, colors, material, price, and package size. Dropdowns use their field test IDs, search when available, match exact text before case-insensitive or partial matches, and verify the selected value before continuing.
 8. If selecting a category reveals more fields, click **Retry empty fields** at the top-right of the page. It fills newly available empty fields without overwriting values already present.
 9. Review every field, correct anything needed, and submit the listing yourself.
 
