@@ -35,9 +35,9 @@ The requested source patterns `https://*://*` and `https://*.vinted.*/*` are not
 2. Open `chrome://extensions` in Chrome and enable **Developer mode**.
 3. Select **Load unpacked** and choose the project directory containing `manifest.json`.
 4. Open a Depop edit page and click the pinned SpeedyList toolbar icon.
-5. In the popup, click **Capture this Depop listing**. The extension reads the description, category, optional material, brand, condition, colors, package size, and price into `chrome.storage.local`.
+5. In the popup, click **Capture this Depop listing**. The extension reads the description, category, optional material and size, brand, condition, colors, package size, and price into `chrome.storage.local`.
 6. Review the saved fields in the popup. Click any populated field row to copy that value; a confirmation appears at the bottom.
-7. Open a Vinted item creation page. The extension fills matching fields; dropdowns are matched by exact text first, then case-insensitive partial text.
+7. Open a Vinted item creation page. The extension fills category, brand, size, condition, colors, material, price, and package size in order. Dropdowns use their field test IDs, search when available, and match exact text before case-insensitive or partial matches.
 8. If selecting a category reveals more fields, click **Retry empty fields** at the top-right of the page. It fills newly available empty fields without overwriting values already present.
 9. Review every field, correct anything needed, and submit the listing yourself.
 
@@ -52,7 +52,7 @@ Marketplace markup can change without notice. Depop and Vinted selectors and con
 ## Manual Checks
 
 - On a Depop edit page, click the toolbar icon and confirm each field is logged with the `[SpeedyList]` prefix.
-- Confirm the payload includes title, description, category, material, brand, condition, colors, package size, price, source URL, and a creation timestamp.
+- Confirm the payload includes title, description, category, material, brand, size, condition, colors, package size, price, source URL, and a creation timestamp.
 - On Vinted's item creation page, confirm text fields receive input/change events, dropdown options match, and storage clears only after required fields are filled.
 - Confirm a missing field or storage error is reported without silently discarding the pending payload.
 - Confirm the extension does not run on unrelated sites or pages.

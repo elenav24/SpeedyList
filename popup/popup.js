@@ -11,6 +11,7 @@
       ["category", "Category"],
       ["material", "Material"],
       ["brand", "Brand"],
+      ["size", "Size"],
       ["condition", "Condition"],
       ["colors", "Colors"],
       ["packageSize", "Package size"],

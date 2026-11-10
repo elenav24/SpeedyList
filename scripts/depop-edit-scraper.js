@@ -47,6 +47,11 @@
         selectors: ['input[name*="brand" i]', 'input[id*="brand" i]', 'input[placeholder*="brand" i]', '[role="combobox"][aria-label*="brand" i]'],
         label: /brand/i
       },
+      size: {
+        selectors: ['select[name="size" i]', 'input[name="size" i]', '[role="combobox"][aria-label="size" i]', 'button[aria-label="size" i]'],
+        label: /^(clothing )?size$/i,
+        optional: true
+      },
       condition: {
         selectors: ['select[name*="condition" i]', '[role="combobox"][aria-label*="condition" i]', 'button[aria-label*="condition" i]'],
         label: /condition/i
@@ -221,10 +226,10 @@
     if (message?.type !== CONFIG.messageType) return;
     const listing = scrapeListing();
     const warningCount = Object.entries(listing).filter(([name, value]) => {
-      if (name === "material" && !value) return false;
+      if (CONFIG.fields[name]?.optional && !value) return false;
       return Array.isArray(value) ? value.length === 0 : !cleanText(value);
     }).length;
-    const payload = { version: 2, source: "depop", sourceUrl: location.href, createdAt: new Date().toISOString(), listing };
+    const payload = { version: 3, source: "depop", sourceUrl: location.href, createdAt: new Date().toISOString(), listing };
 
     chrome.storage.local.set({ [CONFIG.storageKey]: payload }, () => {
       if (chrome.runtime.lastError) {
