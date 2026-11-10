@@ -40,7 +40,22 @@
         label: /condition/i
       },
       colors: {
-        selectors: ['select[name*="color" i]', '[role="combobox"][aria-label*="colou?r" i]', 'button[aria-label*="colou?r" i]'],
+        selectors: [
+          'select[multiple][name*="color" i]',
+          'select[name*="color" i]',
+          'input[type="checkbox"][name*="color" i]',
+          '[role="checkbox"][aria-label*="colou?r" i]',
+          '[role="combobox"][aria-label*="colou?r" i]',
+          'button[aria-label*="colou?r" i]',
+          '[data-testid*="color" i] input[type="checkbox"]'
+        ],
+        selectedSelectors: [
+          'input[type="checkbox"]:checked',
+          '[role="checkbox"][aria-checked="true"]',
+          '[role="option"][aria-selected="true"]',
+          '[aria-pressed="true"]',
+          '[data-state="checked"]'
+        ],
         label: /colou?rs?/i,
         multiple: true
       },
@@ -93,10 +108,45 @@
       return config.multiple ? selected : selected[0] || "";
     }
     if (name === "colors") {
-      const root = control.closest("fieldset, [role='group']") || control.parentElement;
-      const selected = Array.from(root?.querySelectorAll('[aria-selected="true"], [aria-checked="true"], [aria-pressed="true"], [data-state="checked"]') || [])
-        .map((item) => cleanText(item.innerText || item.textContent)).filter(Boolean);
-      if (selected.length) return [...new Set(selected)];
+      const fieldLabel = Array.from(document.querySelectorAll("label")).find((label) =>
+        config.label.test(cleanText(label.innerText || label.textContent))
+      );
+      const root = control.closest('fieldset, [role="group"], [data-testid*="color" i]') ||
+        fieldLabel?.closest('fieldset, [role="group"]') ||
+        fieldLabel?.parentElement?.parentElement ||
+        control.parentElement?.parentElement ||
+        control.parentElement;
+      const selected = new Set();
+      const scopes = [...new Set([root, control.parentElement])].filter(Boolean);
+
+      for (const scope of scopes) {
+        for (const selector of config.selectedSelectors) {
+          for (const item of scope.querySelectorAll(selector)) {
+            let labelText = "";
+            if (item instanceof HTMLInputElement) {
+              labelText = Array.from(item.labels || [], (label) => cleanText(label.innerText || label.textContent))
+                .filter(Boolean).join(" ");
+            }
+            labelText ||= cleanText(
+              item.getAttribute("aria-label") ||
+              item.getAttribute("data-label") ||
+              item.getAttribute("data-value") ||
+              item.innerText ||
+              item.textContent ||
+              (item.value !== "on" ? item.value : "")
+            );
+            if (labelText && !/^(select|choose|pick|add|search)$/i.test(labelText)) {
+              selected.add(labelText);
+            }
+          }
+        }
+      }
+      for (const item of document.querySelectorAll('input[type="checkbox"][name*="color" i]:checked')) {
+        const labelText = Array.from(item.labels || [], (label) => cleanText(label.innerText || label.textContent))
+          .filter(Boolean).join(" ") || cleanText(item.getAttribute("aria-label") || item.value);
+        if (labelText && labelText !== "on") selected.add(labelText);
+      }
+      if (selected.size) return [...selected];
     }
     let value = cleanText(control.getAttribute("aria-valuetext") || control.getAttribute("data-value") || fieldText(control));
     if (/^(select|choose|pick|add|search)\b/i.test(value)) value = "";
