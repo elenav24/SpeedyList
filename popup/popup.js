@@ -22,8 +22,6 @@
     sourceNote: document.getElementById("source-note"),
     captureButton: document.getElementById("capture-button"),
     fieldList: document.getElementById("field-list"),
-    fieldPicker: document.getElementById("field-picker"),
-    copyButton: document.getElementById("copy-button"),
     status: document.getElementById("status")
   };
 
@@ -35,27 +33,40 @@
     return typeof value === "string" ? value : value == null ? "" : String(value);
   }
 
-  function setStatus(message, isError = false) {
+  function setStatus(message, isError = false, isSuccess = false) {
     elements.status.textContent = message;
     elements.status.dataset.error = String(isError);
+    elements.status.dataset.success = String(isSuccess);
   }
 
   function renderFields(payload) {
     currentListing = payload?.listing || null;
     elements.fieldList.replaceChildren();
-    elements.fieldPicker.replaceChildren();
-    const availableFields = [];
+    let availableCount = 0;
 
     for (const [key, label] of CONFIG.fields) {
       const value = currentListing ? valueText(currentListing[key]) : "";
-      const term = document.createElement("dt");
-      term.textContent = label;
-      const detail = document.createElement("dd");
-      detail.textContent = value || "Not set";
-      detail.classList.toggle("is-empty", !value);
-      elements.fieldList.append(term, detail);
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "field-row";
+      row.dataset.field = key;
+      row.disabled = !value;
+      row.setAttribute("aria-label", value ? `Copy ${label} to clipboard` : `${label}, not set`);
 
-      if (value) availableFields.push({ key, label, value });
+      const name = document.createElement("span");
+      name.className = "field-name";
+      name.textContent = label;
+      const detail = document.createElement("span");
+      detail.className = "field-value";
+      detail.classList.toggle("is-empty", !value);
+      detail.textContent = value || "Not set";
+      const hint = document.createElement("span");
+      hint.className = "field-copy-hint";
+      hint.textContent = value ? "COPY" : "";
+      row.append(name, detail, hint);
+      elements.fieldList.append(row);
+
+      if (value) availableCount += 1;
     }
 
     if (!currentListing) {
@@ -64,25 +75,8 @@
     } else {
       const date = payload.createdAt ? new Date(payload.createdAt).toLocaleString() : "Saved listing";
       elements.sourceNote.textContent = date;
-      setStatus(`${availableFields.length} saved fields ready to copy.`);
+      setStatus(`${availableCount} saved fields ready.`);
     }
-
-    if (!availableFields.length) {
-      const option = document.createElement("option");
-      option.value = "";
-      option.textContent = "No fields available";
-      elements.fieldPicker.append(option);
-    } else {
-      for (const field of availableFields) {
-        const option = document.createElement("option");
-        option.value = field.key;
-        option.textContent = field.label;
-        elements.fieldPicker.append(option);
-      }
-    }
-
-    elements.fieldPicker.disabled = availableFields.length === 0;
-    elements.copyButton.disabled = availableFields.length === 0;
   }
 
   function loadSavedListing() {
@@ -136,8 +130,7 @@
     });
   }
 
-  async function copySelectedField() {
-    const key = elements.fieldPicker.value;
+  async function copyField(key) {
     const value = currentListing ? valueText(currentListing[key]) : "";
     if (!value) {
       setStatus("This field has no saved value.", true);
@@ -147,7 +140,7 @@
     try {
       await navigator.clipboard.writeText(value);
       const label = CONFIG.fields.find(([fieldKey]) => fieldKey === key)?.[1] || key;
-      setStatus(`${label} copied.`);
+      setStatus(`${label} copied.`, false, true);
     } catch (error) {
       console.warn("[SpeedyList] Clipboard write failed:", error);
       setStatus("Clipboard copy failed. Check the clipboard permission.", true);
@@ -165,11 +158,11 @@
   });
 
   elements.captureButton.addEventListener("click", captureCurrentTab);
-  elements.copyButton.addEventListener("click", copySelectedField);
-  elements.fieldPicker.addEventListener("change", () => {
-    const label = CONFIG.fields.find(([key]) => key === elements.fieldPicker.value)?.[1];
-    const value = currentListing ? valueText(currentListing[elements.fieldPicker.value]) : "";
-    if (label && value) setStatus(`${label} selected. Click Copy selected to copy it.`);
+  elements.fieldList.addEventListener("click", (event) => {
+    const row = event.target.closest(".field-row");
+    if (row && elements.fieldList.contains(row) && !row.disabled) {
+      copyField(row.dataset.field);
+    }
   });
 
   chrome.storage.onChanged.addListener((changes, areaName) => {

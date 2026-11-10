@@ -36,7 +36,7 @@ The requested source patterns `https://*://*` and `https://*.vinted.*/*` are not
 3. Select **Load unpacked** and choose the project directory containing `manifest.json`.
 4. Open a Depop edit page and click the pinned SpeedyList toolbar icon.
 5. In the popup, click **Capture this Depop listing**. The extension reads the description, category, optional material, brand, condition, colors, package size, and price into `chrome.storage.local`.
-6. Review the saved fields in the popup. Choose a field from **Copy a field** and click **Copy selected** to copy that value.
+6. Review the saved fields in the popup. Click any populated field row to copy that value; a confirmation appears at the bottom.
 7. Open a Vinted item creation page. The extension fills matching fields; dropdowns are matched by exact text first, then case-insensitive partial text.
 8. Review every field, correct anything needed, and submit the listing yourself.
 
