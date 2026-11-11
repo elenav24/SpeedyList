@@ -5,28 +5,98 @@
     storageKey: "speedlist.pendingListing",
     payloadVersion: 3,
     modalWaitMs: 3000,
+    fieldWaitMs: 5000,
     searchSettleMs: 500,
     stepWaitMs: 300,
-    selectionWaitMs: 15000,
-    selectionSettleMs: 900,
+    manualSelectionWaitMs: 120000,
     conditionMap: {
-      "Excellent": "Very good", "Used - Excellent": "Very good", "Like new": "Very good",
-      "Good": "Good", "Used - Good": "Good", "Fair": "Satisfactory", "Used - Fair": "Satisfactory",
-      "New": "New without tags", "Brand new": "New without tags", "New without tags": "New without tags",
+      "Excellent": "Very good",
+      "Used - Excellent": "Very good",
+      "Like new": "Very good",
+      "Good": "Good",
+      "Used - Good": "Good",
+      "Fair": "Satisfactory",
+      "Used - Fair": "Satisfactory",
+      "New": "New without tags",
+      "Brand new": "New without tags",
+      "New without tags": "New without tags",
       "New with tags": "New with tags"
     },
-    optionSelectors: ['[role="option"]', '[role="menuitem"]', '[role="checkbox"]', '[role="radio"]', '[role="listbox"] button', '[role="listbox"] li', '[role="dialog"] button'],
     fields: {
       title: { type: "text", selectors: ['input[name="title"]', 'input[id*="title" i]', 'input[placeholder*="title" i]', 'input[aria-label*="title" i]'], label: /\btitle\b/i },
       description: { type: "text", selectors: ['textarea[name*="description" i]', 'textarea[id*="description" i]', 'textarea[placeholder*="description" i]', 'textarea[aria-label*="description" i]'], label: /\bdescription\b/i },
-      category: { type: "dropdown", testIdPrefixes: ["category"], selectors: ['button[data-testid="category-select-dropdown-input"]', 'select[name*="category" i]', '[role="combobox"][aria-label*="category" i]', 'button[aria-label*="category" i]'], label: /category/i },
-      brand: { type: "dropdown", testIdPrefixes: ["brand"], selectors: ['button[data-testid="brand-select-dropdown-input"]', 'select[name*="brand" i]', '[role="combobox"][aria-label*="brand" i]', 'button[aria-label*="brand" i]'], label: /brand/i },
-      size: { type: "dropdown", optional: true, testIdPrefixes: ["size"], selectors: ['button[data-testid="size-select-dropdown-input"]', 'select[name="size" i]', '[role="combobox"][aria-label="size" i]'], label: /^(clothing )?size$/i },
-      condition: { type: "dropdown", testIdPrefixes: ["condition"], selectors: ['button[data-testid="condition-select-dropdown-input"]', 'select[name*="condition" i]', '[role="combobox"][aria-label*="condition" i]', 'button[aria-label*="condition" i]'], label: /condition/i },
-      colors: { type: "dropdown", multiple: true, testIdPrefixes: ["color", "colour"], selectors: ['button[data-testid="color-select-dropdown-input"]', 'button[data-testid="colour-select-dropdown-input"]', 'select[name*="color" i]', '[role="combobox"][aria-label*="color" i]', '[role="combobox"][aria-label*="colour" i]'], label: /colou?rs?/i },
-      material: { type: "dropdown", optional: true, testIdPrefixes: ["material"], selectors: ['button[data-testid="material-select-dropdown-input"]', 'select[name*="material" i]', '[role="combobox"][aria-label*="material" i]', 'button[aria-label*="material" i]'], label: /material/i },
-      packageSize: { type: "dropdown", testIdPrefixes: ["package-size", "packageSize", "shipping-size"], selectors: ['button[data-testid="package-size-select-dropdown-input"]', 'select[name*="package" i]', '[role="combobox"][aria-label*="package" i]', 'button[aria-label*="package" i]', 'select[name*="shipping" i]'], label: /package size|parcel size|shipping size/i },
-      price: { type: "text", selectors: ['input[name*="price" i]', 'input[id*="price" i]', 'input[placeholder*="price" i]', 'input[inputmode="decimal"]'], label: /price/i }
+      category: {
+        type: "dropdown",
+        mode: "manualCategory",
+        drilldown: true,
+        triggerTestId: "catalog-select-dropdown-input",
+        triggerAliases: ["category-select-dropdown-input"],
+        contentTestId: "catalog-select-dropdown-content",
+        contentAliases: ["category-select-dropdown-content"],
+        valueTestId: "catalog-select-dropdown-input--value",
+        closeTestId: "catalog-select-dropdown-close-button"
+      },
+      brand: {
+        type: "dropdown",
+        mode: "manualSearch",
+        triggerTestId: "brand-select-dropdown-input",
+        contentTestId: "brand-select-dropdown-content",
+        searchTestId: "brand-search--input",
+        closeTestId: "brand-select-dropdown-close-button",
+        valueTestId: "brand-select-dropdown-input--value",
+        selectedValueSelectors: ['input[name="brand"]']
+      },
+      size: {
+        type: "dropdown",
+        mode: "autoSingle",
+        optional: true,
+        triggerTestId: "category-size-single-grid-input",
+        contentTestId: "category-size-single-grid-content",
+        valueTestId: "category-size-single-grid-input--value",
+        closeTestId: "category-size-single-grid-close-button"
+      },
+      condition: {
+        type: "dropdown",
+        mode: "autoSingle",
+        triggerTestId: "category-condition-single-list-input",
+        contentTestId: "category-condition-single-list-content",
+        valueTestId: "category-condition-single-list-input--value",
+        closeTestId: "category-condition-single-list-close-button"
+      },
+      colors: {
+        type: "dropdown",
+        mode: "autoMulti",
+        multiple: true,
+        maxSelections: 2,
+        triggerTestId: "color-select-dropdown-input",
+        contentTestId: "color-select-dropdown-content",
+        valueTestId: "color-select-dropdown-input--value",
+        closeTestId: "color-select-dropdown-close-button"
+      },
+      material: {
+        type: "dropdown",
+        mode: "autoMulti",
+        multiple: true,
+        optional: true,
+        triggerTestId: "category-material-multi-list-input",
+        contentTestId: "category-material-multi-list-content",
+        valueTestId: "category-material-multi-list-input--value",
+        closeTestId: "category-material-multi-list-close-button"
+      },
+      price: {
+        type: "text",
+        selectors: ['input[data-testid="price-input--input"]'],
+        label: /price/i
+      },
+      packageSize: {
+        type: "package",
+        mode: "packageRadio",
+        options: [
+          { label: "Small", titleTestId: "1-package-size--cell--title", inputTestId: "package_type_selector_1--input" },
+          { label: "Medium", titleTestId: "2-package-size--cell--title", inputTestId: "package_type_selector_2--input" },
+          { label: "Large", titleTestId: "3-package-size--cell--title", inputTestId: "package_type_selector_3--input" }
+        ]
+      }
     },
     fillOrder: ["title", "description", "category", "brand", "size", "condition", "colors", "material", "price", "packageSize"]
   };
@@ -89,31 +159,36 @@
     return null;
   }
 
-  function fieldPrefixes(config) {
-    return config.testIdPrefixes || [];
+  function fieldTriggerTestIds(config) {
+    return [config.triggerTestId, ...(config.triggerAliases || [])].filter(Boolean);
   }
 
   function findFieldControl(name, config, reportMismatch = false) {
-    const prefixes = fieldPrefixes(config);
-    for (const prefix of prefixes) {
-      const trigger = document.querySelector(`button[data-testid="${prefix}-select-dropdown-input"]`);
-      if (trigger) return trigger;
+    if (config.type === "dropdown") {
+      for (const testId of fieldTriggerTestIds(config)) {
+        const trigger = document.querySelector(`[data-testid="${testId}"]`);
+        if (trigger) return trigger;
+      }
+      if (reportMismatch) {
+        console.warn(`[SpeedyList] Could not find the ${name} dropdown by its configured test IDs:`, fieldTriggerTestIds(config));
+      }
+      return null;
     }
 
-    const fallback = findControl(config);
-    if (fallback) {
-      if (reportMismatch) {
-        console.warn(`[SpeedyList] ${name} trigger did not match configured test IDs; paste this markup to update the config:`, fallback.outerHTML);
+    if (config.type === "package") {
+      for (const option of config.options) {
+        const input = document.querySelector(`[data-testid="${option.inputTestId}"]`);
+        const title = document.querySelector(`[data-testid="${option.titleTestId}"]`);
+        if (input || title) return input || title;
       }
-      return fallback;
+      if (reportMismatch) console.warn("[SpeedyList] Could not find the configured Package size radios.", config.options);
+      return null;
     }
-    if (reportMismatch) {
-      console.warn(`[SpeedyList] Could not find the ${name} trigger. Expected test IDs:`, prefixes);
-    }
-    return null;
+
+    return findControl(config);
   }
 
-  function waitForFieldControl(name, config, timeoutMs = CONFIG.modalWaitMs) {
+  function waitForFieldControl(name, config, timeoutMs = CONFIG.fieldWaitMs) {
     return new Promise((resolve) => {
       let observer;
       let timeoutId;
@@ -206,24 +281,22 @@
     }
   }
 
-  function dropdownTestId(prefix, suffix) {
-    return `[data-testid="${prefix}-select-dropdown-${suffix}"]`;
-  }
-
-  function findDropdownContent(prefixes) {
-    for (const prefix of prefixes) {
-      const content = document.querySelector(dropdownTestId(prefix, "content"));
-      if (content) return { prefix, content };
+  function findDropdownContent(config) {
+    const contentTestIds = [config.contentTestId, ...(config.contentAliases || [])].filter(Boolean);
+    for (const testId of contentTestIds) {
+      const content = document.querySelector(`[data-testid="${testId}"]`);
+      if (content) return { content, testId, fallback: false };
     }
-    return null;
+    const dialog = Array.from(document.querySelectorAll('[role="dialog"]')).find(visible);
+    return dialog ? { content: dialog, testId: null, fallback: true } : null;
   }
 
-  function waitForDropdownContent(prefixes) {
+  function waitForDropdownContent(config) {
     return new Promise((resolve) => {
       let observer;
       let timeoutId;
       const check = () => {
-        const result = findDropdownContent(prefixes);
+        const result = findDropdownContent(config);
         if (result) {
           clearTimeout(timeoutId);
           observer?.disconnect();
@@ -237,20 +310,52 @@
       observer.observe(document.body, { childList: true, subtree: true });
       timeoutId = setTimeout(() => {
         observer.disconnect();
-        resolve(findDropdownContent(prefixes));
+        resolve(findDropdownContent(config));
       }, CONFIG.modalWaitMs);
     });
   }
 
-  function findModalSearchInput(content, prefix) {
-    return content.querySelector(`input[data-testid="${prefix}-search--input"]`);
+  function findModalSearchInput(content, config) {
+    return config.searchTestId ? content.querySelector(`input[data-testid="${config.searchTestId}"]`) : null;
+  }
+
+  function waitForModalSearchInput(content, config) {
+    return new Promise((resolve) => {
+      let observer;
+      let timeoutId;
+      const check = () => {
+        const input = findModalSearchInput(content, config);
+        if (input) {
+          clearTimeout(timeoutId);
+          observer?.disconnect();
+          resolve(input);
+          return true;
+        }
+        return false;
+      };
+      if (check()) return;
+      observer = new MutationObserver(check);
+      observer.observe(content, { childList: true, subtree: true });
+      timeoutId = setTimeout(() => {
+        observer.disconnect();
+        resolve(findModalSearchInput(content, config));
+      }, CONFIG.fieldWaitMs);
+    });
   }
 
   function setSearchValue(input, value) {
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
     if (!setter) return false;
-    setter.call(input, value);
-    input.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: value }));
+    const query = cleanText(value);
+    input.focus();
+    setter.call(input, query);
+    input.dispatchEvent(new InputEvent("input", {
+      bubbles: true,
+      composed: true,
+      inputType: "insertText",
+      data: query
+    }));
+    input.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
     return true;
   }
 
@@ -259,8 +364,20 @@
       .filter(visible);
   }
 
+  function categoryPath(value) {
+    const entries = Array.isArray(value) ? value : [value];
+    return entries.flatMap((entry) => String(entry || "").split(/\s*(?:>|›|\/|\|)\s*/))
+      .map(cleanText)
+      .filter(Boolean);
+  }
+
   function optionLabel(option) {
-    return cleanText(option.getAttribute("aria-label"));
+    return cleanText(
+      option.getAttribute("aria-label") ||
+      option.querySelector(".web_ui__Cell__title")?.textContent ||
+      option.innerText ||
+      option.textContent
+    );
   }
 
   function matchDropdownOption(options, requested) {
@@ -277,20 +394,22 @@
       optionLabel(option) || cleanText(option.querySelector(".web_ui__Cell__title")?.textContent)
     ).filter(Boolean);
     console.warn(`[SpeedyList] Visible ${name} options:`, labels);
+    console.warn(`[SpeedyList] ${name} dialog markup (first 3000 characters):`, content.outerHTML.slice(0, 3000));
   }
 
-  function findDropdownCloseButton(content, prefixes) {
-    for (const prefix of prefixes) {
-      const selector = dropdownTestId(prefix, "close-button");
+  function findDropdownCloseButton(content, config) {
+    const closeTestId = config.closeTestId || config.triggerTestId?.replace(/-input$/, "-close-button");
+    if (closeTestId) {
+      const selector = `[data-testid="${closeTestId}"]`;
       const closeButton = content.querySelector(selector) || document.querySelector(selector);
       if (closeButton) return closeButton;
     }
     return null;
   }
 
-  function closeDropdown(content, prefixes) {
+  function closeDropdown(content, config) {
     if (!content?.isConnected) return;
-    const closeButton = findDropdownCloseButton(content, prefixes);
+    const closeButton = findDropdownCloseButton(content, config);
     if (closeButton) {
       dispatchPointerClick(closeButton);
     } else {
@@ -298,36 +417,41 @@
     }
   }
 
-  function verifyDropdownValue(prefixes, requestedValues, name) {
-    for (const prefix of prefixes) {
-      const valueElement = document.querySelector(`[data-testid="${prefix}-select-dropdown-input--value"]`);
-      if (!valueElement) continue;
-      const displayed = cleanText(valueElement.textContent);
-      const missing = requestedValues.filter((requested) =>
-        !displayed.toLowerCase().includes(cleanText(requested).toLowerCase())
-      );
-      if (missing.length) {
-        console.warn(`[SpeedyList] ${name} selection did not verify; expected ${missing.join(", ")}, displayed:`, displayed);
-        return false;
-      }
-      console.info(`[SpeedyList] Verified ${name}:`, displayed);
-      return true;
+  function fieldValue(config) {
+    const values = [];
+    for (const testId of config.valueTestIds || (config.valueTestId ? [config.valueTestId] : [])) {
+      const value = cleanText(document.querySelector(`[data-testid="${testId}"]`)?.textContent);
+      if (value) values.push(value);
     }
-    console.warn(`[SpeedyList] Could not verify ${name}; value span not found for test IDs:`, prefixes);
-    return false;
+    for (const selector of config.selectedValueSelectors || []) {
+      const element = document.querySelector(selector);
+      const value = cleanText(element && "value" in element ? element.value : element?.textContent);
+      if (value) values.push(value);
+    }
+    return [...new Set(values)].join(" | ");
   }
 
-  function dropdownValueContains(prefixes, requested) {
-    return prefixes.some((prefix) => {
-      const valueElement = document.querySelector(`[data-testid="${prefix}-select-dropdown-input--value"]`);
-      return cleanText(valueElement?.textContent).toLowerCase().includes(cleanText(requested).toLowerCase());
-    });
+  function verifyDropdownValue(config, requestedValues, name) {
+    const displayed = fieldValue(config);
+    const missing = requestedValues.filter((requested) =>
+      !displayed.toLowerCase().includes(cleanText(requested).toLowerCase())
+    );
+    if (missing.length) {
+      console.warn(`[SpeedyList] ${name} selection did not verify; expected ${missing.join(", ")}, displayed:`, displayed);
+      return false;
+    }
+    console.info(`[SpeedyList] Verified ${name}:`, displayed);
+    return Boolean(displayed);
   }
 
-  function optionIsSelected(option, prefixes, requested) {
+  function dropdownValueContains(config, requested) {
+    return fieldValue(config).toLowerCase().includes(cleanText(requested).toLowerCase());
+  }
+
+  function optionIsSelected(option, config, requested) {
     return option.getAttribute("aria-checked") === "true" ||
       option.getAttribute("aria-selected") === "true" ||
-      dropdownValueContains(prefixes, requested);
+      dropdownValueContains(config, requested);
   }
 
   function modalIsLoading(content) {
@@ -341,15 +465,74 @@
     });
   }
 
-  async function waitForDropdownSelection(option, prefixes, requested, content) {
-    const startedAt = Date.now();
-    while (Date.now() - startedAt < CONFIG.selectionWaitMs) {
-      if (optionIsSelected(option, prefixes, requested)) return "selected";
-      const elapsed = Date.now() - startedAt;
-        if (content?.isConnected && !modalIsLoading(content) && elapsed >= CONFIG.selectionSettleMs) return "not-selected";
-      await wait(100);
+  function dropdownDisplayedValue(config) {
+    return fieldValue(config);
+  }
+
+  function hasAssignedDropdownValue(value) {
+    return Boolean(value && !/^(select|choose|pick|add|search)(\b|\s)/i.test(value));
+  }
+
+  async function waitForManualSelection(config, requested, initialValue, content) {
+    let clickedLabel = "";
+    const handleOptionClick = (event) => {
+      const path = typeof event.composedPath === "function" ? event.composedPath() : [event.target];
+      const activeContent = findDropdownContent(config)?.content || content;
+      const eventTarget = event.target instanceof Element ? event.target : null;
+      const option = path.find((node) => node instanceof Element && node.matches('[role="radio"], [role="checkbox"]')) ||
+        eventTarget?.closest('[role="radio"], [role="checkbox"]');
+      const dialog = option?.closest('[role="dialog"]') || activeContent?.closest('[role="dialog"]');
+      if (!option || (!activeContent?.contains(option) && !dialog?.contains(option))) return;
+      clickedLabel = optionLabel(option) || cleanText(option.querySelector(".web_ui__Cell__title")?.textContent);
+      console.info("[SpeedyList] Detected manual dropdown option click:", clickedLabel);
+    };
+    document.addEventListener("click", handleOptionClick, true);
+
+    const deadline = Date.now() + CONFIG.manualSelectionWaitMs;
+    try {
+      while (Date.now() < deadline) {
+        const displayed = dropdownDisplayedValue(config);
+        const requestedText = cleanText(requested).toLowerCase();
+        const displayedLower = displayed.toLowerCase();
+        if (displayedLower && (displayedLower.includes(requestedText) || requestedText.includes(displayedLower))) {
+          return displayed;
+        }
+
+        const activeContent = findDropdownContent(config)?.content || content;
+        const matchingOption = matchDropdownOption(visibleDropdownOptions(activeContent), requested);
+        if (matchingOption && (
+          matchingOption.getAttribute("aria-checked") === "true" ||
+          matchingOption.getAttribute("aria-selected") === "true"
+        )) {
+          return optionLabel(matchingOption) || displayed || cleanText(requested);
+        }
+
+        if (clickedLabel) {
+          await wait(CONFIG.selectionSettleMs);
+          return clickedLabel || dropdownDisplayedValue(config);
+        }
+
+        if (displayed && displayed !== initialValue && hasAssignedDropdownValue(displayed) && !modalIsLoading(activeContent)) {
+          return displayed;
+        }
+        await wait(100);
+      }
+      return "";
+    } finally {
+      document.removeEventListener("click", handleOptionClick, true);
     }
-    return optionIsSelected(option, prefixes, requested) ? "selected" : "timeout";
+  }
+
+  async function waitForManualCategory(config, initialValue, content) {
+    const deadline = Date.now() + CONFIG.manualSelectionWaitMs;
+    while (Date.now() < deadline) {
+      const displayed = dropdownDisplayedValue(config);
+      if (!findDropdownContent(config) && hasAssignedDropdownValue(displayed) && !modalIsLoading(content)) {
+        return displayed;
+      }
+      await wait(150);
+    }
+    return "";
   }
 
   function fireSelectEvents(control) {
@@ -385,109 +568,163 @@
     return true;
   }
 
+  async function selectOption(option, config, value) {
+    dispatchPointerClick(option);
+    await wait(CONFIG.stepWaitMs);
+    const selected = () => option.getAttribute("aria-checked") === "true" ||
+      option.getAttribute("aria-selected") === "true" ||
+      Boolean(option.querySelector('input[type="radio"]:checked, input[type="checkbox"]:checked')) ||
+      dropdownValueContains(config, value);
+    if (selected()) return true;
+    if (option.isConnected) option.click();
+    await wait(CONFIG.stepWaitMs);
+    return selected();
+  }
+
   async function fillCustomDropdown(control, config, values, fieldName) {
-    const prefixes = fieldPrefixes(config);
-    if (!prefixes.length) {
-      console.warn(`[SpeedyList] No dropdown test-id prefix configured for ${fieldName}; trigger:`, control.outerHTML);
-      return false;
-    }
-
-    const expectedTestIds = prefixes.map((prefix) => `${prefix}-select-dropdown-input`);
-    if (!expectedTestIds.includes(control.getAttribute("data-testid"))) {
-      console.warn(`[SpeedyList] ${fieldName} trigger has an unexpected test ID; paste this markup to update the config:`, control.outerHTML);
-    }
-
-    const selected = [];
     let modalResult = null;
-    let failed = false;
-    let nonBlockingOther = false;
-
     try {
       control.scrollIntoView({ behavior: "smooth", block: "center" });
       dispatchPointerClick(control);
-      modalResult = await waitForDropdownContent(prefixes);
+      modalResult = await waitForDropdownContent(config);
       if (!modalResult) {
         console.warn(`[SpeedyList] ${fieldName} dialog did not appear; trigger:`, control.outerHTML);
         return false;
       }
 
-      for (const value of values) {
+      if (config.mode === "manualCategory") {
+        const sourcePath = categoryPath(values).join(" > ");
+        const initialValue = dropdownDisplayedValue(config);
+        showStatus(`Choose the Vinted category${sourcePath ? ` (Depop: ${sourcePath})` : ""}; waiting for your selection...`);
+        const selectedCategory = await waitForManualCategory(config, initialValue, modalResult.content);
+        if (!selectedCategory) {
+          dropdownWaitTimedOut = true;
+          console.warn("[SpeedyList] Category selection was not completed; pausing dependent fields.");
+          return false;
+        }
+        console.info("[SpeedyList] Manually selected category:", selectedCategory);
+        return true;
+      }
+
+      if (config.mode === "manualSearch") {
+        const requested = cleanText(values[0]);
+        const searchInput = await waitForModalSearchInput(modalResult.content, config);
+        if (!searchInput) {
+          console.warn(`[SpeedyList] ${fieldName} search input not found; dialog:`, modalResult.content.outerHTML.slice(0, 3000));
+          return false;
+        }
+        if (!setSearchValue(searchInput, requested)) {
+          console.warn(`[SpeedyList] Could not set ${fieldName} query; input:`, searchInput.outerHTML);
+          return false;
+        }
+        await wait(CONFIG.searchSettleMs);
+        const currentInput = findModalSearchInput(modalResult.content, config);
+        console.info(`[SpeedyList] ${fieldName} query:`, currentInput?.value || requested);
+        const initialValue = dropdownDisplayedValue(config);
+        showStatus(`${fieldName} search filled with "${requested}". Click the matching option; waiting...`);
+        const selected = await waitForManualSelection(config, requested, initialValue, modalResult.content);
+        if (!selected) {
+          dropdownWaitTimedOut = true;
+          console.warn(`[SpeedyList] Manual ${fieldName} selection timed out for "${requested}".`);
+          return false;
+        }
+        console.info(`[SpeedyList] Manually selected ${fieldName}:`, selected);
+        return true;
+      }
+
+      const requestedValues = Array.isArray(values) ? values : [values];
+      const maxSelections = config.maxSelections || requestedValues.length;
+      const valuesToSelect = requestedValues.slice(0, maxSelections);
+      const skipped = requestedValues.slice(maxSelections);
+      if (skipped.length) {
+        console.warn(`[SpeedyList] Skipped ${fieldName} beyond its limit of ${maxSelections}:`, skipped);
+      }
+
+      let failed = false;
+      const selectedValues = [];
+      for (const [index, value] of valuesToSelect.entries()) {
         if (!modalResult.content.isConnected) {
-          control = findFieldControl(fieldName, config, true) || control;
+          control = findFieldControl(fieldName, config, true);
+          if (!control) {
+            console.warn(`[SpeedyList] Could not reopen ${fieldName} picker.`);
+            failed = true;
+            break;
+          }
           dispatchPointerClick(control);
-          modalResult = await waitForDropdownContent(prefixes);
+          modalResult = await waitForDropdownContent(config);
         }
         if (!modalResult?.content) {
-          console.warn(`[SpeedyList] ${fieldName} dialog closed before all values were selected.`);
+          console.warn(`[SpeedyList] ${fieldName} dialog did not render.`);
           failed = true;
           break;
-        }
-
-        const searchInput = findModalSearchInput(modalResult.content, modalResult.prefix);
-        if (searchInput && setSearchValue(searchInput, cleanText(value))) {
-          await wait(CONFIG.searchSettleMs);
         }
 
         const options = visibleDropdownOptions(modalResult.content);
         const option = matchDropdownOption(options, value);
         if (!option) {
           logVisibleOptions(modalResult.content, fieldName);
-          if (fieldName === "brand" && cleanText(value).toLowerCase() === "other") {
-            console.warn('[SpeedyList] Depop brand is "Other" and Vinted has no matching option; leaving Brand empty.');
-            nonBlockingOther = true;
-          } else {
-            console.warn(`[SpeedyList] Could not match ${fieldName} option "${value}".`);
-            failed = true;
+          if (fieldName === "material") {
+            console.warn(`[SpeedyList] No Vinted material match for "${value}"; continuing.`);
+            continue;
           }
-          break;
-        }
-
-        if (!optionIsSelected(option, prefixes, value)) {
-          showStatus(`Waiting for Vinted to select ${fieldName}...`);
-          dispatchPointerClick(option);
-          let selectionState = await waitForDropdownSelection(option, prefixes, value, modalResult.content);
-          if (selectionState === "timeout") {
-            dropdownWaitTimedOut = true;
-            console.warn(`[SpeedyList] Vinted is still loading ${fieldName} option "${value}"; pausing the remaining fields.`);
-            failed = true;
-            break;
+          if (fieldName === "colors") {
+            console.warn(`[SpeedyList] Vinted does not offer color "${value}"; skipping it.`);
+            continue;
           }
-          if (selectionState === "not-selected" && option.isConnected) {
-            console.warn(`[SpeedyList] Pointer sequence did not select ${fieldName} option "${value}"; trying element click fallback.`);
-            option.click();
-            selectionState = await waitForDropdownSelection(option, prefixes, value, modalResult.content);
-            if (selectionState === "timeout") {
-              dropdownWaitTimedOut = true;
-              console.warn(`[SpeedyList] Vinted is still loading ${fieldName} option "${value}" after fallback; pausing the remaining fields.`);
-              failed = true;
-              break;
-            }
-          }
-        }
-        if (!optionIsSelected(option, prefixes, value)) {
-          console.warn(`[SpeedyList] Click did not select ${fieldName} option "${value}".`);
           failed = true;
           break;
         }
-        selected.push(optionLabel(option));
-        await wait(CONFIG.stepWaitMs);
+
+        const selected = await selectOption(option, config, value);
+        if (!selected) {
+          console.warn(`[SpeedyList] Could not select ${fieldName} option "${value}".`);
+          failed = true;
+          break;
+        }
+        selectedValues.push(optionLabel(option));
+        console.info(`[SpeedyList] Selected ${fieldName}:`, optionLabel(option));
+        if (!config.multiple) break;
+        if (index < valuesToSelect.length - 1) await wait(CONFIG.stepWaitMs);
       }
+
+      if (failed || !selectedValues.length) return false;
+      const verified = verifyDropdownValue(config, selectedValues, fieldName);
+      return verified;
     } finally {
-      closeDropdown(modalResult?.content, prefixes);
+      closeDropdown(modalResult?.content, config);
+    }
+  }
+
+  function fillPackageSize(value, config) {
+    const requested = cleanText(value);
+    const candidates = config.options.map((option) => ({
+      ...option,
+      title: document.querySelector(`[data-testid="${option.titleTestId}"]`),
+      input: document.querySelector(`[data-testid="${option.inputTestId}"]`)
+    }));
+    const match = candidates.find(({ title }) => title && cleanText(title.textContent) === requested) ||
+      candidates.find(({ title }) => title && cleanText(title.textContent).toLowerCase() === requested.toLowerCase()) ||
+      candidates.find(({ title }) => title && cleanText(title.textContent).toLowerCase().includes(requested.toLowerCase()));
+
+    if (!match) {
+      console.warn(`[SpeedyList] No Package size match for "${requested}". Visible labels:`, candidates.map(({ title }) => cleanText(title?.textContent)).filter(Boolean));
+      return false;
     }
 
-    if (nonBlockingOther) return true;
-    if (failed || !selected.length) return false;
-    const verified = verifyDropdownValue(prefixes, selected, fieldName);
-    if (verified) console.info(`[SpeedyList] Filled ${fieldName}:`, selected);
-    return verified;
+    const cell = match.title.closest('[role="radio"], label, [data-testid*="package_type_selector"]') || match.title.parentElement;
+    const target = match.input && visible(match.input) ? match.input : cell || match.title;
+    dispatchPointerClick(target);
+    if (match.input && !match.input.checked) match.input.click();
+    const selected = match.input?.checked || cell?.getAttribute("aria-checked") === "true" || cell?.getAttribute("aria-selected") === "true";
+    console.info(`[SpeedyList] Package size ${selected ? "selected" : "clicked"}:`, requested);
+    return Boolean(selected || target);
   }
 
   async function fillDropdown(control, config, value, name) {
-    const values = config.multiple ? value : [value];
-    return control instanceof HTMLSelectElement
-      ? fillNativeSelect(control, values, name)
-      : fillCustomDropdown(control, config, values, name);
+    const values = config.drilldown
+      ? categoryPath(value)
+      : config.multiple ? (Array.isArray(value) ? value : [value]) : [value];
+    return fillCustomDropdown(control, config, values, name);
   }
 
   function hasValue(value) {
@@ -495,12 +732,14 @@
   }
 
   function fieldHasValue(control, fieldName, config) {
-    for (const prefix of fieldPrefixes(config)) {
-      const valueElement = document.querySelector(`[data-testid="${prefix}-select-dropdown-input--value"]`);
-      const displayed = cleanText(valueElement?.textContent);
-      if (displayed && !/^(select|choose|pick|add|search)(\b|\s)/i.test(displayed)) {
-        return true;
-      }
+    const displayed = fieldValue(config);
+    if (hasAssignedDropdownValue(displayed)) return true;
+
+    if (config.type === "package") {
+      return config.options.some((option) => {
+        const input = document.querySelector(`[data-testid="${option.inputTestId}"]`);
+        return Boolean(input?.checked || input?.getAttribute("aria-checked") === "true");
+      });
     }
 
     if (control instanceof HTMLSelectElement) {
@@ -518,12 +757,6 @@
 
     const accessibleValue = cleanText(control.getAttribute("aria-valuetext") || control.getAttribute("data-value"));
     if (accessibleValue && !/^(select|choose|pick|add|search)(\b|\s)/i.test(accessibleValue)) {
-      return true;
-    }
-
-    const container = control.closest('[class*="_selectControl_"], fieldset, [role="group"]') || control.parentElement;
-    const selectedChips = container?.querySelector('[class*="_selectedItemLabel_"]');
-    if (selectedChips && cleanText(selectedChips.textContent)) {
       return true;
     }
 
@@ -564,49 +797,65 @@
     updateRetryButton(true);
     showStatus("Looking for Vinted listing fields...");
     let failed = false;
-    for (const name of CONFIG.fillOrder) {
-      const config = CONFIG.fields[name];
-      let value = payload.listing[name];
-      if (!hasValue(value)) {
-        console.warn(`[SpeedyList] No source value for ${name}${config.optional ? " (optional; skipping)" : "; keeping payload for retry"}.`);
-        if (!config.optional) failed = true;
+    try {
+      for (const name of CONFIG.fillOrder) {
+        const config = CONFIG.fields[name];
+        let value = payload.listing[name];
+        if (!hasValue(value)) {
+          if (!config.optional) {
+            console.warn(`[SpeedyList] No source value for ${name}; keeping payload for retry.`);
+            failed = true;
+          }
+          await wait(CONFIG.stepWaitMs);
+          continue;
+        }
+        const control = await waitForFieldControl(name, config);
+        if (!control) {
+          findFieldControl(name, config, true);
+          console.warn(`[SpeedyList] Could not find the Vinted ${name} field.`);
+          if (!config.optional) failed = true;
+          await wait(CONFIG.stepWaitMs);
+          continue;
+        }
+        if (retry && fieldHasValue(control, name, config)) {
+          console.info(`[SpeedyList] Retry skipped populated ${name} field.`);
+          await wait(CONFIG.stepWaitMs);
+          continue;
+        }
+        if (name === "condition") value = mapCondition(String(value));
+        const success = config.type === "package"
+          ? fillPackageSize(value, config)
+          : config.type === "dropdown"
+            ? await fillDropdown(control, config, value, name)
+            : setTextValue(control, String(value));
+        if (success) {
+          if (config.type !== "dropdown") console.info(`[SpeedyList] Filled ${name}:`, value);
+        } else {
+          console.warn(`[SpeedyList] Could not fill Vinted ${name}.`);
+          failed = true;
+          if (dropdownWaitTimedOut) break;
+        }
         await wait(CONFIG.stepWaitMs);
-        continue;
       }
-      const control = await waitForFieldControl(name, config);
-      if (!control) {
-        findFieldControl(name, config, true);
-        console.warn(`[SpeedyList] Could not find the Vinted ${name} field.`);
-        if (!config.optional) failed = true;
-        await wait(CONFIG.stepWaitMs);
-        continue;
+
+      if (failed) {
+        console.warn("[SpeedyList] Required fields remain unmatched; payload retained in storage.");
+        showStatus(
+          dropdownWaitTimedOut
+            ? "Picker selection timed out. Complete the selection, then click Retry empty fields."
+            : "Some fields need attention. The saved copy is still available.",
+          true
+        );
+        return;
       }
-      if (retry && fieldHasValue(control, name, config)) {
-        console.info(`[SpeedyList] Retry skipped populated ${name} field.`);
-        await wait(CONFIG.stepWaitMs);
-        continue;
-      }
-      if (name === "condition") value = mapCondition(String(value));
-      const success = config.type === "dropdown"
-        ? await fillDropdown(control, config, value, name)
-        : setTextValue(control, String(value));
-      if (success) {
-        if (config.type !== "dropdown") console.info(`[SpeedyList] Filled ${name}:`, value);
-      } else {
-        console.warn(`[SpeedyList] Could not fill Vinted ${name}.`);
-        failed = true;
-        if (dropdownWaitTimedOut) break;
-      }
-      await wait(CONFIG.stepWaitMs);
+      clearPayload();
+    } catch (error) {
+      console.error("[SpeedyList] Unexpected fill error:", error);
+      showStatus("A fill error occurred. The saved copy is still available; check the page console.", true);
+    } finally {
+      filling = false;
+      updateRetryButton();
     }
-    filling = false;
-    updateRetryButton();
-    if (failed) {
-      console.warn("[SpeedyList] Required fields remain unmatched; payload retained in storage.");
-      showStatus("Some fields need attention. The saved copy is still available.", true);
-      return;
-    }
-    clearPayload();
   }
 
   chrome.storage.local.get(CONFIG.storageKey, (result) => {

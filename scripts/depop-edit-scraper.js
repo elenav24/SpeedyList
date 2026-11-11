@@ -196,6 +196,14 @@
     else console.info(`[SpeedyList] Scraped ${name}:`, value);
   }
 
+  function capitalizeWords(str) {
+  return str
+    .toLowerCase() // Optional: ensures remaining letters are lowercase
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
   function scrapeListing() {
     const descriptionControl = findControl(CONFIG.fields.description);
     const rawDescription = descriptionControl
@@ -203,6 +211,7 @@
       : "";
     const lines = rawDescription.split(/\r?\n/);
     const listing = { title: cleanText(lines.shift()), description: lines.join("\n").trim() };
+    listing.title = capitalizeWords(listing.title);
     logScraped("title", listing.title);
     logScraped("description", listing.description);
 
